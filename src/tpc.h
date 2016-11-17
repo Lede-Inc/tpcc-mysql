@@ -99,3 +99,5 @@ void Lastname(int num, char* name);
 #ifdef __cplusplus
 }
 #endif
+
+#include "mysql_stmt_wrapper.h"
