@@ -73,7 +73,7 @@ main(argc, argv)
 	char           connect_string[DB_STRING_MAX];
 	char           db_string[DB_STRING_MAX];
 	char	       db_user[DB_STRING_MAX];
-	char	       db_password[DB_STRING_MAX];
+	char	       db_password[DB_STRING_MAX]="";
         int            port= 3306;
 
 	int i,c;
@@ -228,7 +228,7 @@ main(argc, argv)
 			       59) ) goto Error_SqlCall_close;
     */
     sprintf(SQL, "INSERT INTO %s_stock.stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
-    if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL) ) goto Error_SqlCall_close;
+    if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[3],
 			       "INSERT INTO district values(?,?,?,?,?,?,?,?,?,?,?)",
 			       50) ) goto Error_SqlCall_close;
@@ -240,8 +240,8 @@ main(argc, argv)
 			       "INSERT INTO history values(?,?,?,?,?,?,?,?)",
 			       43) ) goto Error_SqlCall_close;
     */
-    sprintf(SQL, "INSERT INTO %s_history.histroy values(?,?,?,?,?,?,?,?)", db_string);
-    if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL) ) goto Error_SqlCall_close;
+    sprintf(SQL, "INSERT INTO %s_history.history values(?,?,?,?,?,?,?,?)", db_string);
+    if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[6],
 			       "INSERT INTO orders values(?,?,?,?,?,NULL,?, 1)",
 			       46) ) goto Error_SqlCall_close;

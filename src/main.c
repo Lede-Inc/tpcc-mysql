@@ -778,7 +778,9 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][3], "INSERT INTO orders (o_id, d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local) VALUES(?, ?, ?, ?, ?, ?, ?)", 111) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][4], "INSERT INTO new_orders (no_o_id, d_id, no_w_id) VALUES (?,?,?)", 65) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][5], "SELECT i_price, i_name, i_data FROM item WHERE i_id = ?", 55) ) goto sqlerr;
-  if( mysql_stmt_prepare(stmt[t_num][6], "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", 189) ) goto sqlerr;
+  //if( mysql_stmt_prepare(stmt[t_num][6], "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", 189) ) goto sqlerr;
+  sprintf(SQL, "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM %s_stock.stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", db_string);
+  if( mysql_stmt_prepare(stmt[t_num][6], SQL, strlen(SQL)) ) goto sqlerr;
   //if( mysql_stmt_prepare(stmt[t_num][7], "UPDATE stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", 63) ) goto sqlerr;
   sprintf(SQL, "UPDATE %s_stock.stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][7], SQL, strlen(SQL)) ) goto sqlerr;

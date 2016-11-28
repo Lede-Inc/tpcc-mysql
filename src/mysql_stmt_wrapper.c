@@ -70,7 +70,7 @@ my_bool _my_mysql_stmt_bind_param(MYSQL_STMT *stmt, MYSQL_BIND *bind) {
 	}
 	strcpy(exec_pos, prep_sql+offset);
 	
-	fprintf(stderr, "Prep_SQL:%s, Exec_SQL:%s @ %s", prep_sql, exec_sql, __func__);
+	//fprintf(stderr, "Prep_SQL:%s, Exec_SQL:%s @ %s", prep_sql, exec_sql, __func__);
 
 	return 0;
 };
