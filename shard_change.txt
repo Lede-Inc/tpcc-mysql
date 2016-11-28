@@ -1,0 +1,9 @@
+warehouse w_id - 5              公共表
+district d_id - 10              公共表 或者 d_id
+stock        s_w_id    s_i_id   按s_i_id   单独vdb   db_stock
+order_line   ol_w_id   ol_d_id  按ol_d_id
+customer    c_d_id c_w_id       按c_d_id
+history      只有插入，没有查询    按h_d_id   自定义查询语句 做range  单独vdb  db_history
+item         i_id               按i_id
+orders       o_d_id   o_w_id    按o_d_id 
+new_orders   no_w_id  no_d_id   按no_d_id
