@@ -215,24 +215,33 @@ main(argc, argv)
 	    if(!stmt[i]) goto Error_SqlCall_close;
 	}
 
+    char SQL[1024];
 	if( mysql_stmt_prepare(stmt[0],
 			       "INSERT INTO item values(?,?,?,?,?)",
 			       34) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[1],
 			       "INSERT INTO warehouse values(?,?,?,?,?,?,?,?,?)",
 			       47) ) goto Error_SqlCall_close;
-	if( mysql_stmt_prepare(stmt[2],
+	/*
+    if( mysql_stmt_prepare(stmt[2],
 			       "INSERT INTO stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)",
 			       59) ) goto Error_SqlCall_close;
+    */
+    sprintf(SQL, "INSERT INTO %s_stock.stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
+    if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[3],
 			       "INSERT INTO district values(?,?,?,?,?,?,?,?,?,?,?)",
 			       50) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[4],
 			       "INSERT INTO customer values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 10.0, 1, 0,?)",
 			       76) ) goto Error_SqlCall_close;
+    /*
 	if( mysql_stmt_prepare(stmt[5],
 			       "INSERT INTO history values(?,?,?,?,?,?,?,?)",
 			       43) ) goto Error_SqlCall_close;
+    */
+    sprintf(SQL, "INSERT INTO %s_history.histroy values(?,?,?,?,?,?,?,?)", db_string);
+    if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[6],
 			       "INSERT INTO orders values(?,?,?,?,?,NULL,?, 1)",
 			       46) ) goto Error_SqlCall_close;

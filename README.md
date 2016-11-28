@@ -4,7 +4,7 @@
 
 2. Load data
    * create database
-     `mysqladmin create tpcc1000`
+     bash ./create_db.sh
    * create tables
      `mysql tpcc1000 < create_table.sql`
    * create indexes and FK ( this step can be done after loading data)
