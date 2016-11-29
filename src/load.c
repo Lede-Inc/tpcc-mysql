@@ -216,47 +216,71 @@ main(argc, argv)
 	}
 
     char SQL[1024];
+	char * SSQL[20] = {
+                   "INSERT INTO item (i_id,i_im_id,i_name,i_price,i_data) values(?,?,?,?,?)",
+                   "INSERT INTO warehouse (w_id,w_name,w_street_1,w_street_2,w_city,w_state,w_zip,w_tax,w_ytd) values(?,?,?,?,?,?,?,?,?)",
+                   "INSERT INTO stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)",
+			       "INSERT INTO district (d_id,d_w_id,d_name,d_street_1,d_street_2,d_city,d_state,d_zip,d_tax,d_ytd,d_next_o_id) values(?,?,?,?,?,?,?,?,?,?,?)",
+			       "INSERT INTO customer(c_id,d_id,c_w_id,c_first,c_middle,c_last,c_street_1,c_street_2,c_city,c_state,c_zip,c_phone,c_since,c_credit,c_credit_lim,c_discount,c_balance,c_ytd_payment,c_payment_cnt,c_delivery_cnt,c_data) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 10.0, 1, 0,?)",
+			       "INSERT INTO history values(?,?,?,?,?,?,?,?)",
+			       "INSERT INTO orders(o_id,d_id,o_w_id,o_c_id,o_entry_d,o_carrier_id,o_ol_cnt,o_all_local) values(?,?,?,?,?,NULL,?, 1)",
+			       "INSERT INTO new_orders(no_o_id,d_id,no_w_id) values(?,?,?)",
+			       "INSERT INTO orders (o_id,d_id,o_w_id,o_c_id,o_entry_d,o_carrier_id,o_ol_cnt,o_all_local)values(?,?,?,?,?,?,?, 1)",
+			       "INSERT INTO order_line(ol_o_id,d_id,ol_w_id,ol_number,ol_i_id,ol_supply_w_id,ol_delivery_d,ol_quantity,ol_amount,ol_dist_info) values(?,?,?,?,?,?, NULL,?,?,?)",
+			       "INSERT INTO order_line(ol_o_id,d_id,ol_w_id,ol_number,ol_i_id,ol_supply_w_id,ol_delivery_d,ol_quantity,ol_amount,ol_dist_info) values(?,?,?,?,?,?,?,?,?,?)",
+					NULL};
+
 	if( mysql_stmt_prepare(stmt[0],
-			       "INSERT INTO item values(?,?,?,?,?)",
-			       34) ) goto Error_SqlCall_close;
+                   SSQL[0], strlen(SSQL[0])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO item values(?,?,?,?,?)",
+			       //34) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[1],
-			       "INSERT INTO warehouse values(?,?,?,?,?,?,?,?,?)",
-			       47) ) goto Error_SqlCall_close;
+                   SSQL[1], strlen(SSQL[1])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO warehouse values(?,?,?,?,?,?,?,?,?)",
+			       //47) ) goto Error_SqlCall_close;
 	/*
     if( mysql_stmt_prepare(stmt[2],
 			       "INSERT INTO stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)",
 			       59) ) goto Error_SqlCall_close;
     */
-    sprintf(SQL, "INSERT INTO %s_stock.stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
+    sprintf(SQL, "INSERT INTO %s_stock.stock(s_i_id,s_w_id,s_quantity,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10,s_ytd,s_order_cnt,s_remote_cnt,s_data) values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
     if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[3],
-			       "INSERT INTO district values(?,?,?,?,?,?,?,?,?,?,?)",
-			       50) ) goto Error_SqlCall_close;
+                   SSQL[3], strlen(SSQL[3])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO district values(?,?,?,?,?,?,?,?,?,?,?)",
+			       //50) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[4],
-			       "INSERT INTO customer values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 10.0, 1, 0,?)",
-			       76) ) goto Error_SqlCall_close;
+                   SSQL[4], strlen(SSQL[4])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO customer values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 10.0, 1, 0,?)",
+			       //76) ) goto Error_SqlCall_close;
     /*
 	if( mysql_stmt_prepare(stmt[5],
-			       "INSERT INTO history values(?,?,?,?,?,?,?,?)",
-			       43) ) goto Error_SqlCall_close;
+                   SSQL[5], strlen(SSQL[5])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO history values(?,?,?,?,?,?,?,?)",
+			       //43) ) goto Error_SqlCall_close;
     */
-    sprintf(SQL, "INSERT INTO %s_history.history values(?,?,?,?,?,?,?,?)", db_string);
+    sprintf(SQL, "INSERT INTO %s_history.history(h_c_id,h_c_d_id,h_c_w_id,d_id,h_w_id,h_date,h_amount,h_data) values(?,?,?,?,?,?,?,?)", db_string);
     if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[6],
-			       "INSERT INTO orders values(?,?,?,?,?,NULL,?, 1)",
-			       46) ) goto Error_SqlCall_close;
+                   SSQL[6], strlen(SSQL[6])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO orders values(?,?,?,?,?,NULL,?, 1)",
+			       //46) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[7],
-			       "INSERT INTO new_orders values(?,?,?)",
-			       36) ) goto Error_SqlCall_close;
+                   SSQL[7], strlen(SSQL[7])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO new_orders values(?,?,?)",
+			       //36) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[8],
-			       "INSERT INTO orders values(?,?,?,?,?,?,?, 1)",
-			       43) ) goto Error_SqlCall_close;
+                   SSQL[8], strlen(SSQL[8])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO orders values(?,?,?,?,?,?,?, 1)",
+			       //43) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[9],
-			       "INSERT INTO order_line values(?,?,?,?,?,?, NULL,?,?,?)",
-			       54) ) goto Error_SqlCall_close;
+                   SSQL[9], strlen(SSQL[9])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO order_line values(?,?,?,?,?,?, NULL,?,?,?)",
+			       //54) ) goto Error_SqlCall_close;
 	if( mysql_stmt_prepare(stmt[10],
-			       "INSERT INTO order_line values(?,?,?,?,?,?,?,?,?,?)",
-			       50) ) goto Error_SqlCall_close;
+                   SSQL[10], strlen(SSQL[10])) ) goto Error_SqlCall_close;
+			       //"INSERT INTO order_line values(?,?,?,?,?,?,?,?,?,?)",
+			       //50) ) goto Error_SqlCall_close;
 
 
 	/* exec sql begin transaction; */
