@@ -811,7 +811,8 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][30], "SELECT SUM(ol_amount) FROM order_line WHERE ol_o_id = ? AND d_id = ? AND ol_w_id = ?", 87) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][31], "UPDATE customer SET c_balance = c_balance + ? , c_delivery_cnt = c_delivery_cnt + 1 WHERE c_id = ? AND d_id = ? AND c_w_id = ?", 128) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][32], "SELECT d_next_o_id FROM district WHERE d_id = ? AND d_w_id = ?", 62) ) goto sqlerr;
-  if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20)", 113) ) goto sqlerr;
+  //if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20)", 113) ) goto sqlerr;
+  if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20) ORDER BY ol_i_id", 130) ) goto sqlerr;
   //if( mysql_stmt_prepare(stmt[t_num][34], "SELECT count(*) FROM stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", 77) ) goto sqlerr;
   sprintf(SQL, "SELECT count(*) FROM %s_stock.stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][34], SQL, strlen(SQL)) ) goto sqlerr;
