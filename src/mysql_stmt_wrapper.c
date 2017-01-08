@@ -191,3 +191,18 @@ int _my_mysql_stmt_store_result(MYSQL_STMT * stmt) {
 		return 1;
 	}
 };
+
+int _mysql_trans_no_xa(MYSQL * mysql) {
+	int ret = 1;
+	MYSQL_RES * res;
+	ret = mysql_query(mysql, "SELECT /*# transaction=SINGLE_NODE*/ 1");
+	if (ret == 0) { 
+		res = mysql_store_result(mysql);
+	}
+	if (ret == 0 && res != NULL) {
+		mysql_free_result(res);
+	}
+
+	return ret;	
+	
+}

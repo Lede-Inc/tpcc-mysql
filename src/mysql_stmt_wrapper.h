@@ -1,6 +1,8 @@
 #ifndef __mysql_stmt_wrapper__H_
 #define __mysql_stmt_wrapper__H_
 
+#define MYSQL_WRAPPER
+
 #include <mysql.h>
 
 #define SHARD 1
@@ -18,7 +20,9 @@
 #define mysql_stmt_prepare(...) _my_mysql_stmt_prepare(__VA_ARGS__)
 #define mysql_stmt_sqlstate(...) _my_mysql_stmt_sqlstate(__VA_ARGS__)
 #define mysql_stmt_store_result(...) _my_mysql_stmt_store_result(__VA_ARGS__)
+#define mysql_trans_no_xa(...) _mysql_trans_no_xa(__VA_ARGS__)
 #else
+#define mysql_trans_no_xa(...)  ((int)0)
 #endif
 
 #ifdef __cplusplus
@@ -37,6 +41,9 @@ MYSQL_STMT * _my_mysql_stmt_init(MYSQL * mysql);
 int _my_mysql_stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsigned long length);
 const char * _my_mysql_stmt_sqlstate(MYSQL_STMT * stmt);
 int _my_mysql_stmt_store_result(MYSQL_STMT * stmt);
+
+int _mysql_trans_no_xa(MYSQL * mysql);
+
 #ifdef __cplusplus
 }
 #endif

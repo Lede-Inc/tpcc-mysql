@@ -44,6 +44,21 @@ extern double total_rt[];
 
 extern int rt_limit[];
 
+#ifdef MYSQL_WRAPPER
+extern XA_RATE[];
+extern MYSQL **ctx;
+#define SETUP_XA_BY_RATE(n) do {\
+if (XA_RATE[n] == 0) { \
+	mysql_trans_no_xa(ctx[t_num]); \
+} else if (XA_RATE[n] < 100) { \
+	if (RandomNumber(1,100) > XA_RATE[n]) { \
+		mysql_trans_no_xa(ctx[t_num]); \
+	} \
+} \
+} while(0)
+
+#endif
+
 extern long clk_tck;
 extern sb_percentile_t local_percentile;
 
@@ -58,18 +73,33 @@ int driver (int t_num)
     while( activate_transaction ){
       switch(seq_get()){
       case 0:
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(0);
+#endif
 	do_neword(t_num);
 	break;
       case 1:
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(1);
+#endif
 	do_payment(t_num);
 	break;
       case 2:
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(2);
+#endif
 	do_ordstat(t_num);
 	break;
       case 3:
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(3);
+#endif
 	do_delivery(t_num);
 	break;
       case 4:
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(4);
+#endif
 	do_slev(t_num);
 	break;
       default:

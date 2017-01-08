@@ -103,6 +103,8 @@ long clk_tck;
 int is_local = 0; /* "1" mean local */
 int valuable_flg = 0; /* "1" mean valuable ratio */
 
+int XA_RATE[5];
+
 
 typedef struct
 {
@@ -113,6 +115,32 @@ int thread_main(thread_arg*);
 
 void alarm_handler(int signum);
 void alarm_dummy();
+
+void deal_X_optarg(const char * optarg) {
+	if (!optarg) { return; }
+	int i = 0;
+	if (!strcmp(optarg, "100")) {
+		for (i= 0; i < 5; i++) { XA_RATE[i] = 100; }
+	} else if (!strcmp(optarg, "0")) {
+		for (i= 0; i < 5; i++) { XA_RATE[i] = 0; }
+	} else {
+		do {
+			int p = atoi(optarg);
+			if (p > 100) { p = 100; };
+			if (p < 0) { p = 0;}
+			XA_RATE[i] = p;
+			i = i + 1;
+			optarg = strchr(optarg, ',');
+			if (optarg) {
+				optarg = optarg + 1;
+			}
+		} while (optarg && *optarg && i < 5);
+	}
+
+	for (i=0; i<5; i++) {
+		printf("XA_RATE[%d]:%4d%%\n", i, XA_RATE[i]);
+	}
+}
 
 
 int main( int argc, char *argv[] )
@@ -167,7 +195,7 @@ int main( int argc, char *argv[] )
 
   /* Parse args */
 
-    while ( (c = getopt(argc, argv, "h:P:d:u:p:w:c:r:l:i:f:t:m:o:S:0:1:2:3:4:")) != -1) {
+    while ( (c = getopt(argc, argv, "h:P:d:u:p:w:c:r:l:i:f:t:m:o:S:0:1:2:3:4:X:")) != -1) {
         switch (c) {
         case 'h':
             printf ("option h with value '%s'\n", optarg);
@@ -229,6 +257,11 @@ int main( int argc, char *argv[] )
             printf ("option S (socket) with value '%s'\n", optarg);
             strncpy(db_socket, optarg, DB_STRING_MAX);
             break;
+#ifdef MYSQL_WRAPPER
+		case 'X':
+            printf ("option X (XA transaction) with value '%s'\n", optarg);
+			deal_X_optarg(optarg);
+#endif
         case '0':
             printf ("option 0 (response time limit for transaction 0) '%s'\n", optarg);
             rt_limit[0] = atoi(optarg);
@@ -251,6 +284,9 @@ int main( int argc, char *argv[] )
             break;
         case '?':
     	    printf("Usage: tpcc_start -h server_host -P port -d database_name -u mysql_user -p mysql_password -w warehouses -c connections -r warmup_time -l running_time -i report_interval -f report_file -t trx_file\n");
+#ifdef MYSQL_WRAPPER
+			printf("Use -X 10,20,30,40,50 to setup XA transaction percent for neword, payment, ordstat, dilivery, and slev; to disable XA just set -X 0, or force XA set -X 100\n");
+#endif
             exit(0);
         default:
             printf ("?? getopt returned character code 0%o ??\n", c);
@@ -770,20 +806,25 @@ int thread_main (thread_arg* arg)
       if(!stmt[t_num][i]) goto sqlerr;
   }
 
-  /* Prepare ALL of SQLs */
+#ifdef MYSQL_WRAPPER
   char SQL[1024];
+#endif
+  /* Prepare ALL of SQLs */
   if( mysql_stmt_prepare(stmt[t_num][0], "SELECT c_discount, c_last, c_credit, w_tax FROM customer, warehouse WHERE w_id = ? AND c_w_id = w_id AND d_id = ? AND c_id = ?", 128) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][1], "SELECT d_next_o_id, d_tax FROM district WHERE d_id = ? AND d_w_id = ? FOR UPDATE", 80) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][2], "UPDATE district SET d_next_o_id = ? + 1 WHERE d_id = ? AND d_w_id = ?", 69) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][3], "INSERT INTO orders (o_id, d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local) VALUES(?, ?, ?, ?, ?, ?, ?)", 111) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][4], "INSERT INTO new_orders (no_o_id, d_id, no_w_id) VALUES (?,?,?)", 65) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][5], "SELECT i_price, i_name, i_data FROM item WHERE i_id = ?", 55) ) goto sqlerr;
-  //if( mysql_stmt_prepare(stmt[t_num][6], "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", 189) ) goto sqlerr;
+#ifdef MYSQL_WRAPPER
   sprintf(SQL, "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM %s_stock.stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", db_string);
   if( mysql_stmt_prepare(stmt[t_num][6], SQL, strlen(SQL)) ) goto sqlerr;
-  //if( mysql_stmt_prepare(stmt[t_num][7], "UPDATE stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", 63) ) goto sqlerr;
   sprintf(SQL, "UPDATE %s_stock.stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][7], SQL, strlen(SQL)) ) goto sqlerr;
+#else
+  if( mysql_stmt_prepare(stmt[t_num][6], "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", 189) ) goto sqlerr;
+  if( mysql_stmt_prepare(stmt[t_num][7], "UPDATE stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", 63) ) goto sqlerr;
+#endif
   if( mysql_stmt_prepare(stmt[t_num][8], "INSERT INTO order_line (ol_o_id, d_id, ol_w_id, ol_number, ol_i_id, ol_supply_w_id, ol_quantity, ol_amount, ol_dist_info) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 159) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][9], "UPDATE warehouse SET w_ytd = w_ytd + ? WHERE w_id = ?", 53) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][10], "SELECT w_street_1, w_street_2, w_city, w_state, w_zip, w_name FROM warehouse WHERE w_id = ?", 91) ) goto sqlerr;
@@ -795,9 +836,12 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][16], "SELECT c_data FROM customer WHERE c_w_id = ? AND d_id = ? AND c_id = ?", 72) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][17], "UPDATE customer SET c_balance = ?, c_data = ? WHERE c_w_id = ? AND d_id = ? AND c_id = ?", 90) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][18], "UPDATE customer SET c_balance = ? WHERE c_w_id = ? AND d_id = ? AND c_id = ?", 78) ) goto sqlerr;
-  //if( mysql_stmt_prepare(stmt[t_num][19], "INSERT INTO history(h_c_d_id, h_c_w_id, h_c_id, d_id, h_w_id, h_date, h_amount, h_data) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", 120) ) goto sqlerr;
+#ifdef MYSQL_WRAPPER
   sprintf(SQL, "INSERT INTO %s_history.history(h_c_d_id, h_c_w_id, h_c_id, d_id, h_w_id, h_date, h_amount, h_data) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", db_string);
   if( mysql_stmt_prepare(stmt[t_num][19], SQL, strlen(SQL)) ) goto sqlerr;
+#else
+  if( mysql_stmt_prepare(stmt[t_num][19], "INSERT INTO history(h_c_d_id, h_c_w_id, h_c_id, d_id, h_w_id, h_date, h_amount, h_data) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", 120) ) goto sqlerr;
+#endif
   if( mysql_stmt_prepare(stmt[t_num][20], "SELECT count(c_id) FROM customer WHERE c_w_id = ? AND d_id = ? AND c_last = ?", 79) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][21], "SELECT c_balance, c_first, c_middle, c_last FROM customer WHERE c_w_id = ? AND d_id = ? AND c_last = ? ORDER BY c_first", 121) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][22], "SELECT c_balance, c_first, c_middle, c_last FROM customer WHERE c_w_id = ? AND d_id = ? AND c_id = ?", 102) ) goto sqlerr;
@@ -811,11 +855,16 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][30], "SELECT SUM(ol_amount) FROM order_line WHERE ol_o_id = ? AND d_id = ? AND ol_w_id = ?", 87) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][31], "UPDATE customer SET c_balance = c_balance + ? , c_delivery_cnt = c_delivery_cnt + 1 WHERE c_id = ? AND d_id = ? AND c_w_id = ?", 128) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][32], "SELECT d_next_o_id FROM district WHERE d_id = ? AND d_w_id = ?", 62) ) goto sqlerr;
-  //if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20)", 113) ) goto sqlerr;
+#ifdef MYSQL_WRAPPER
+  //DISTINCT col must be ordered by mysqld
   if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20) ORDER BY ol_i_id", 130) ) goto sqlerr;
-  //if( mysql_stmt_prepare(stmt[t_num][34], "SELECT count(*) FROM stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", 77) ) goto sqlerr;
+  //Change database.
   sprintf(SQL, "SELECT count(*) FROM %s_stock.stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][34], SQL, strlen(SQL)) ) goto sqlerr;
+#else
+  if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20)", 113) ) goto sqlerr;
+  if( mysql_stmt_prepare(stmt[t_num][34], "SELECT count(*) FROM stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", 77) ) goto sqlerr;
+#endif
 
   r = driver(t_num);
 

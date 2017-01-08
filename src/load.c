@@ -41,6 +41,7 @@ long            max_ware;
 int             i;
 int             option_debug = 0;	/* 1 if generating debug output    */
 int             is_local = 1;           /* "1" mean local */
+int				XA = 0;		/* 1 mean XA transaction */
 
 #define DB_STRING_MAX 51
 
@@ -53,6 +54,14 @@ try_stmt_execute(MYSQL_STMT *mysql_stmt)
     if (ret) {
         printf("\n%d, %s, %s\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql) );
         mysql_rollback(mysql);
+#ifdef MYSQL_WRAPPER
+		if (XA == 0) {
+			if (mysql_trans_no_xa(mysql)) {
+				return ret;
+			}
+		}
+#endif
+
     }
     return ret;
 }
@@ -89,7 +98,7 @@ main(argc, argv)
 
   /* Parse args */
 
-    while ( (c = getopt(argc, argv, "h:P:d:u:p:w:l:m:n:")) != -1) {
+    while ( (c = getopt(argc, argv, "h:P:d:u:p:w:l:m:n:X")) != -1) {
         switch (c) {
         case 'h':
             printf ("option h with value '%s'\n", optarg);
@@ -128,8 +137,16 @@ main(argc, argv)
             printf ("option P with value '%s'\n", optarg);
             port = atoi(optarg);
             break;
+#ifdef MYSQL_WRAPPER
+		case 'X':
+			printf("option X with value ture");
+			XA = 1;
+#endif
         case '?':
     	    printf("Usage: tpcc_load -h server_host -P port -d database_name -u mysql_user -p mysql_password -w warehouses -l part -m min_wh -n max_wh\n");
+#ifdef MYSQL_WRAPPER
+    	    printf("-X to load with XA transaction, default is use stand transaction\n");
+#endif
     	    printf("* [part]: 1=ITEMS 2=WAREHOUSE 3=CUSTOMER 4=ORDERS\n");
             exit(0);
         default:
@@ -204,6 +221,13 @@ main(argc, argv)
 
 	if(resp) {
 	    mysql_autocommit(mysql, 0);
+#ifdef MYSQL_WRAPPER
+		if (XA == 0) {
+			if (mysql_trans_no_xa(mysql)) {
+				goto Error_SqlCall_close;
+			}
+		}
+#endif
 	    mysql_query(mysql, "SET UNIQUE_CHECKS=0");
 	    mysql_query(mysql, "SET FOREIGN_KEY_CHECKS=0");
 	} else {
@@ -215,7 +239,9 @@ main(argc, argv)
 	    if(!stmt[i]) goto Error_SqlCall_close;
 	}
 
+#ifdef MYSQL_WRAPPER
     char SQL[1024];
+#endif
 	char * SSQL[20] = {
                    "INSERT INTO item (i_id,i_im_id,i_name,i_price,i_data) values(?,?,?,?,?)",
                    "INSERT INTO warehouse (w_id,w_name,w_street_1,w_street_2,w_city,w_state,w_zip,w_tax,w_ytd) values(?,?,?,?,?,?,?,?,?)",
@@ -238,13 +264,14 @@ main(argc, argv)
                    SSQL[1], strlen(SSQL[1])) ) goto Error_SqlCall_close;
 			       //"INSERT INTO warehouse values(?,?,?,?,?,?,?,?,?)",
 			       //47) ) goto Error_SqlCall_close;
-	/*
+#ifdef MYSQL_WRAPPER
+    sprintf(SQL, "INSERT INTO %s_stock.stock(s_i_id,s_w_id,s_quantity,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10,s_ytd,s_order_cnt,s_remote_cnt,s_data) values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
+    if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
+#else
     if( mysql_stmt_prepare(stmt[2],
 			       "INSERT INTO stock values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)",
 			       59) ) goto Error_SqlCall_close;
-    */
-    sprintf(SQL, "INSERT INTO %s_stock.stock(s_i_id,s_w_id,s_quantity,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10,s_ytd,s_order_cnt,s_remote_cnt,s_data) values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
-    if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
+#endif
 	if( mysql_stmt_prepare(stmt[3],
                    SSQL[3], strlen(SSQL[3])) ) goto Error_SqlCall_close;
 			       //"INSERT INTO district values(?,?,?,?,?,?,?,?,?,?,?)",
@@ -253,14 +280,15 @@ main(argc, argv)
                    SSQL[4], strlen(SSQL[4])) ) goto Error_SqlCall_close;
 			       //"INSERT INTO customer values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 10.0, 1, 0,?)",
 			       //76) ) goto Error_SqlCall_close;
-    /*
+#ifdef MYSQL_WRAPPER
+    sprintf(SQL, "INSERT INTO %s_history.history(h_c_id,h_c_d_id,h_c_w_id,d_id,h_w_id,h_date,h_amount,h_data) values(?,?,?,?,?,?,?,?)", db_string);
+    if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
+#else
 	if( mysql_stmt_prepare(stmt[5],
                    SSQL[5], strlen(SSQL[5])) ) goto Error_SqlCall_close;
 			       //"INSERT INTO history values(?,?,?,?,?,?,?,?)",
 			       //43) ) goto Error_SqlCall_close;
-    */
-    sprintf(SQL, "INSERT INTO %s_history.history(h_c_id,h_c_d_id,h_c_w_id,d_id,h_w_id,h_date,h_amount,h_data) values(?,?,?,?,?,?,?,?)", db_string);
-    if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
+#endif
 	if( mysql_stmt_prepare(stmt[6],
                    SSQL[6], strlen(SSQL[6])) ) goto Error_SqlCall_close;
 			       //"INSERT INTO orders values(?,?,?,?,?,NULL,?, 1)",
