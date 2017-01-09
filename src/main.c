@@ -24,6 +24,9 @@
 /* Global SQL Variables */
 MYSQL **ctx;
 MYSQL_STMT ***stmt;
+#ifdef MYSQL_WRAPPER
+char * XA_FLAG;
+#endif
 
 #define DB_STRING_MAX 128
 #define MAX_CLUSTER_SIZE 128
@@ -478,6 +481,12 @@ int main( int argc, char *argv[] )
 
   ctx = malloc( sizeof(MYSQL *) * num_conn );
   stmt = malloc( sizeof(MYSQL_STMT **) * num_conn );
+#ifdef MYSQL_WRAPPER
+  XA_FLAG = malloc(sizeof(char) * num_conn);
+  for ( i=0; i < num_conn; i++) {
+    XA_FLAG[i] = 1;
+  }
+#endif
   for( i=0; i < num_conn; i++ ){
       stmt[i] = malloc( sizeof(MYSQL_STMT *) * 40 );
   }

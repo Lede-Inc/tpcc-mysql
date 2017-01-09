@@ -45,15 +45,24 @@ extern double total_rt[];
 extern int rt_limit[];
 
 #ifdef MYSQL_WRAPPER
-extern XA_RATE[];
+extern int XA_RATE[];
+extern char * XA_FLAG;
 extern MYSQL **ctx;
-#define SETUP_XA_BY_RATE(n) do {\
+//Now if we want to use signal node xa. we must reset every time.
+//If we use start transection, we may use the flag.
+#define SETUP_XA_BY_RATE(n) do { \
+int flag = 1; \
 if (XA_RATE[n] == 0) { \
-	mysql_trans_no_xa(ctx[t_num]); \
+    flag = 0;\
+    mysql_autocommit(ctx[t_num],1);\
+    mysql_autocommit(ctx[t_num],0);\
+    mysql_trans_no_xa(ctx[t_num]); \
 } else if (XA_RATE[n] < 100) { \
-	if (RandomNumber(1,100) > XA_RATE[n]) { \
-		mysql_trans_no_xa(ctx[t_num]); \
-	} \
+    if (RandomNumber(1,100) > XA_RATE[n]) { \
+        mysql_autocommit(ctx[t_num],1);\
+        mysql_autocommit(ctx[t_num],0);\
+        mysql_trans_no_xa(ctx[t_num]); \
+    } \
 } \
 } while(0)
 
