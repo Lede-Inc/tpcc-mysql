@@ -173,6 +173,9 @@ static int do_neword (int t_num)
     clk1 = clock_gettime(CLOCK_MONOTONIC, &tbuf1 );
     for (i = 0; i < MAX_RETRY; i++) {
       ret = neword(t_num, w_id, d_id, c_id, ol_cnt, all_local, itemid, supware, qty);
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(0);
+#endif
       clk2 = clock_gettime(CLOCK_MONOTONIC, &tbuf2 );
 
       if(ret){
@@ -273,6 +276,9 @@ static int do_payment (int t_num)
     clk1 = clock_gettime(CLOCK_MONOTONIC, &tbuf1 );
     for (i = 0; i < MAX_RETRY; i++) {
       ret = payment(t_num, w_id, d_id, byname, c_w_id, c_d_id, c_id, c_last, h_amount);
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(1);
+#endif
       clk2 = clock_gettime(CLOCK_MONOTONIC, &tbuf2 );
 
       if(ret){
@@ -346,6 +352,9 @@ static int do_ordstat (int t_num)
       clk1 = clock_gettime(CLOCK_MONOTONIC, &tbuf1 );
     for (i = 0; i < MAX_RETRY; i++) {
       ret = ordstat(t_num, w_id, d_id, byname, c_id, c_last);
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(2);
+#endif
       clk2 = clock_gettime(CLOCK_MONOTONIC, &tbuf2 );
 
       if(ret){
@@ -412,6 +421,9 @@ static int do_delivery (int t_num)
       clk1 = clock_gettime(CLOCK_MONOTONIC, &tbuf1 );
     for (i = 0; i < MAX_RETRY; i++) {
       ret = delivery(t_num, w_id, o_carrier_id);
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(3);
+#endif
       clk2 = clock_gettime(CLOCK_MONOTONIC, &tbuf2 );
 
       if(ret){
@@ -479,6 +491,9 @@ static int do_slev (int t_num)
       clk1 = clock_gettime(CLOCK_MONOTONIC, &tbuf1 );
     for (i = 0; i < MAX_RETRY; i++) {
       ret = slev(t_num, w_id, d_id, level);
+#ifdef MYSQL_WRAPPER
+SETUP_XA_BY_RATE(4);
+#endif
       clk2 = clock_gettime(CLOCK_MONOTONIC, &tbuf2 );
 
       if(ret){
