@@ -342,7 +342,8 @@ main(argc, argv)
 
 	/* EXEC SQL COMMIT WORK; */
 
-	if( mysql_commit(mysql) ) goto Error_SqlCall;
+	//avoid double commit cause error.
+    if( mysql_commit(mysql) ) goto Error_SqlCall;
 
 	for( i=0; i<11; i++ ){
 	    mysql_stmt_close(stmt[i]);
@@ -504,6 +505,11 @@ LoadWare()
 	printf("Loading Warehouse \n");
     w_id = min_ware;
 retry:
+    if (XA == 0) {
+        //force warehouse and distinct use XA.
+        mysql_autocommit(mysql, 1);
+        mysql_autocommit(mysql, 0);
+    }
     if (retried)
         printf("Retrying ....\n");
     retried = 1;
@@ -590,7 +596,8 @@ LoadCust()
 			Customer(d_id, w_id);
 
 	/* EXEC SQL COMMIT WORK;*/	/* Just in case */
-	if( mysql_commit(mysql) ) goto sqlerr;
+    //Disalbe addtion commit for avoid proxy error.
+	//if( mysql_commit(mysql) ) goto sqlerr;
 
 	return;
 sqlerr:
