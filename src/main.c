@@ -140,6 +140,10 @@ void deal_X_optarg(const char * optarg) {
 		} while (optarg && *optarg && i < 5);
 	}
 
+    //force neword and payment to use XA
+	XA_RATE[0] = 100;
+	XA_RATE[1] = 100;
+
 	for (i=0; i<5; i++) {
 		printf("XA_RATE[%d]:%4d%%\n", i, XA_RATE[i]);
 	}
