@@ -343,7 +343,7 @@ main(argc, argv)
 	/* EXEC SQL COMMIT WORK; */
 
 	//avoid double commit cause error.
-    if( mysql_commit(mysql) ) goto Error_SqlCall;
+    //if( mysql_commit(mysql) ) goto Error_SqlCall;
 
 	for( i=0; i<11; i++ ){
 	    mysql_stmt_close(stmt[i]);
