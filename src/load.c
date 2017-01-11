@@ -41,7 +41,7 @@ long            max_ware;
 int             i;
 int             option_debug = 0;	/* 1 if generating debug output    */
 int             is_local = 1;           /* "1" mean local */
-int				XA = 0;		/* 1 mean XA transaction */
+int             XA = 1;		/* 1 mean XA transaction */
 
 #define DB_STRING_MAX 51
 
@@ -817,6 +817,11 @@ District(w_id)
 	d_ytd = 30000.0;
 	d_next_o_id = 3001L;
 retry:
+    if (XA == 0) {
+        //force warehouse and distinct use XA.
+        mysql_autocommit(mysql, 1);
+        mysql_autocommit(mysql, 0);
+    }
 	for (d_id = 1; d_id <= DIST_PER_WARE; d_id++) {
 
 		/* Generate District Data */
