@@ -45,6 +45,12 @@ int             XA = 1;		/* 1 mean XA transaction */
 
 #define DB_STRING_MAX 51
 
+#define RESET_TRANS_STATE(mysql) \
+do {\
+mysql_autocommit(mysql,1); \
+mysql_autocommit(mysql,0); \
+}while(0)
+
 #include "parse_port.h"
 
 int
@@ -468,6 +474,7 @@ retry:
 
 	/* EXEC SQL COMMIT WORK; */
 	if( mysql_commit(mysql) ) goto sqlerr;
+    RESET_TRANS_STATE(mysql);
 
 	printf("Item Done. \n");
 	return;
@@ -568,6 +575,7 @@ retry:
 
 		/* EXEC SQL COMMIT WORK; */
 		if( mysql_commit(mysql) ) goto sqlerr;
+		RESET_TRANS_STATE(mysql);
 
 	}
 
@@ -627,6 +635,7 @@ LoadOrd()
 
 	/* EXEC SQL COMMIT WORK; */	/* Just in case */
 	if( mysql_commit(mysql) ) goto sqlerr;
+	RESET_TRANS_STATE(mysql);
 
 	return;
 sqlerr:
@@ -1069,6 +1078,7 @@ retry:
 	}
 	/* EXEC SQL COMMIT WORK; */
 	if( mysql_commit(mysql) ) goto sqlerr;
+    RESET_TRANS_STATE(mysql);
 	printf("Customer Done.\n");
 
 	return;
@@ -1287,6 +1297,7 @@ retry:
 	}
 	/*EXEC SQL COMMIT WORK;*/
 	if( mysql_commit(mysql) ) goto sqlerr;
+    RESET_TRANS_STATE(mysql);
 
 	printf("Orders Done.\n");
 	return;
