@@ -262,9 +262,10 @@ int main( int argc, char *argv[] )
             strncpy(db_socket, optarg, DB_STRING_MAX);
             break;
 #ifdef MYSQL_WRAPPER
-		case 'X':
+        case 'X':
             printf ("option X (XA transaction) with value '%s'\n", optarg);
-			deal_X_optarg(optarg);
+            deal_X_optarg(optarg);
+            break;
 #endif
         case '0':
             printf ("option 0 (response time limit for transaction 0) '%s'\n", optarg);
@@ -287,9 +288,9 @@ int main( int argc, char *argv[] )
             rt_limit[4] = atoi(optarg);
             break;
         case '?':
-    	    printf("Usage: tpcc_start -h server_host -P port -d database_name -u mysql_user -p mysql_password -w warehouses -c connections -r warmup_time -l running_time -i report_interval -f report_file -t trx_file\n");
+            printf("Usage: tpcc_start -h server_host -P port -d database_name -u mysql_user -p mysql_password -w warehouses -c connections -r warmup_time -l running_time -i report_interval -f report_file -t trx_file\n");
 #ifdef MYSQL_WRAPPER
-			printf("Use -X 10,20,30,40,50 to setup XA transaction percent for neword, payment, ordstat, dilivery, and slev; to disable XA just set -X 0, or force XA set -X 100\n");
+            printf("Use -X 10,20,30,40,50 to setup XA transaction percent for neword, payment, ordstat, dilivery, and slev; to disable XA just set -X 0, or force XA set -X 100\n");
 #endif
             exit(0);
         default:

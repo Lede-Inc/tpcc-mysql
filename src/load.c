@@ -42,6 +42,7 @@ int             i;
 int             option_debug = 0;	/* 1 if generating debug output    */
 int             is_local = 1;           /* "1" mean local */
 int             XA = 0;		/* 1 mean XA transaction */
+int             XA_arg = 0;		/* 1 mean XA transaction */
 
 #define DB_STRING_MAX 51
 
@@ -144,9 +145,11 @@ main(argc, argv)
             port = atoi(optarg);
             break;
 #ifdef MYSQL_WRAPPER
-		case 'X':
-			printf("option X with value ture");
-			XA = 1;
+        case 'X':
+            printf("option X with value ture");
+            XA = 1;
+            XA_arg = 1;
+            break;
 #endif
         case '?':
     	    printf("Usage: tpcc_load -h server_host -P port -d database_name -u mysql_user -p mysql_password -w warehouses -l part -m min_wh -n max_wh\n");
@@ -190,6 +193,12 @@ main(argc, argv)
 	    printf("  [part(1-4)]: %d\n", part_no);
 	    printf("     [MIN WH]: %d\n", min_ware);
 	    printf("     [MAX WH]: %d\n", max_ware);
+            if (part_no == 1 || part_no == 4) {
+                if (XA == 0) {
+                    printf("Part %d need XA, force XA...", part_no);
+                    XA = 1;
+                }
+            }
 	}
 
 	fd = open("/dev/urandom", O_RDONLY);
@@ -392,7 +401,8 @@ LoadItems()
 
 	/* EXEC SQL WHENEVER SQLERROR GOTO sqlerr; */
 
-	printf("Loading Item \n");
+	printf("Loading Item , Global Force XA\n");
+        XA = 1;
 
 	for (i = 0; i < MAXITEMS / 10; i++)
 		orig[i] = 0;
@@ -509,7 +519,8 @@ LoadWare()
 
 	/* EXEC SQL WHENEVER SQLERROR GOTO sqlerr; */
 
-	printf("Loading Warehouse \n");
+	printf("Loading Warehouse , Set XA to %d\n", XA_arg);
+        XA = XA_arg;
     w_id = min_ware;
 retry:
     if (XA == 0) {
@@ -932,7 +943,8 @@ Customer(d_id, w_id)
 
 	/*EXEC SQL WHENEVER SQLERROR GOTO sqlerr;*/
 
-	printf("Loading Customer for DID=%ld, WID=%ld\n", d_id, w_id);
+	printf("Loading Customer for DID=%ld, WID=%ld, Set XA to %d\n", d_id, w_id, XA_arg);
+        XA = XA_arg;
 
 retry:
     if (retried)
@@ -1119,7 +1131,8 @@ Orders(d_id, w_id)
 
 	/* EXEC SQL WHENEVER SQLERROR GOTO sqlerr; */
 
-	printf("Loading Orders for D=%ld, W= %ld\n", d_id, w_id);
+	printf("Loading Orders for D=%ld, W= %ld, Force XA \n", d_id, w_id);
+        XA = 1;
 	o_d_id = d_id;
 	o_w_id = w_id;
 retry:
