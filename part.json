@@ -1,0 +1,70 @@
+{
+  "vdb": [
+    {
+      "id": 1,
+      "type": "int",
+      "method": "hash",
+      "num": 4,
+      "partitions": {"data1": [0], "data2": [1], "data3": [2], "data4": [3]}
+    },
+    {
+      "id": 2,
+      "type": "int",
+      "method": "hash",
+      "num": 4,
+      "partitions": {"data1": [0], "data2": [1], "data3": [2], "data4": [3]}
+    },
+    {
+      "id": 3,
+      "type": "int",
+      "method": "range",
+      "num": 0,
+      "partitions": {"data1": 3, "data2": 6, "data3": 9, "data4": 12}
+    },
+    {
+      "id":4,
+      "type":"int",
+      "method":"hash",
+      "num":4,
+      "partitions":{"data1":[0], "data2":[1], "data3":[2], "data4":[3]}
+     },
+     {
+      "id":5,
+      "type":"int",
+      "method":"hash",
+      "num":4,
+      "partitions":{"data1":[0], "data2":[1], "data3":[2], "data4":[3]}
+     }
+  ],
+  "table": [
+
+    {"vdb": 1, "db": "tpcc", "table": "district", "pkey": "d_id"},
+    {"vdb": 1, "db": "tpcc", "table": "customer", "pkey": "d_id"},
+    {"vdb": 1, "db": "tpcc", "table": "new_orders", "pkey": "d_id"},
+    {"vdb": 1, "db": "tpcc", "table": "orders", "pkey": "d_id"},
+    {"vdb": 1, "db": "tpcc", "table": "order_line", "pkey": "d_id"},
+    {"vdb": 2, "db": "tpcc_stock", "table": "stock", "pkey": "s_i_id"},
+    {"vdb": 3, "db": "tpcc_history", "table": "history", "pkey": "d_id"},
+    {"vdb": 4, "db": "sbtest", "table": "sbtest1", "pkey": "k"},
+    {"vdb": 5, "db": "tpccwid", "table": "warehouse", "pkey": "w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "district", "pkey": "d_w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "customer", "pkey": "c_w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "new_orders", "pkey": "no_w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "orders", "pkey": "o_w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "order_line", "pkey": "ol_w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "stock", "pkey": "s_w_id"},
+    {"vdb": 5, "db": "tpccwid", "table": "history", "pkey": "h_c_w_id"}
+  ],
+  "default": {
+    "tpccwid": "data4",
+    "tpcc": "data4",
+    "tpcc_stock": "data4",
+    "tpcc_history": "data4"
+  },
+  "all": {
+    "tpccwid": ["data1", "data2", "data3", "data4"],
+    "tpcc": ["data1", "data2", "data3", "data4"],
+    "tpcc_stock": ["data1", "data2", "data3", "data4"],
+    "tpcc_history": ["data1", "data2", "data3", "data4"]
+  }
+}

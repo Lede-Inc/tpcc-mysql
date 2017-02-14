@@ -141,10 +141,6 @@ void deal_X_optarg(const char * optarg) {
 	}
 
     //force neword and payment to use XA
-	XA_RATE[0] = 100;
-	XA_RATE[1] = 100;
-	XA_RATE[4] = 100;
-
 	for (i=0; i<5; i++) {
 		printf("XA_RATE[%d]:%4d%%\n", i, XA_RATE[i]);
 	}
@@ -831,9 +827,9 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][4], "INSERT INTO new_orders (no_o_id, d_id, no_w_id) VALUES (?,?,?)", 65) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][5], "SELECT i_price, i_name, i_data FROM item WHERE i_id = ?", 55) ) goto sqlerr;
 #ifdef MYSQL_WRAPPER
-  sprintf(SQL, "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM %s_stock.stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", db_string);
+  sprintf(SQL, "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM %s.stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", db_string);
   if( mysql_stmt_prepare(stmt[t_num][6], SQL, strlen(SQL)) ) goto sqlerr;
-  sprintf(SQL, "UPDATE %s_stock.stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", db_string);
+  sprintf(SQL, "UPDATE %s.stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][7], SQL, strlen(SQL)) ) goto sqlerr;
 #else
   if( mysql_stmt_prepare(stmt[t_num][6], "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", 189) ) goto sqlerr;
@@ -851,7 +847,7 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][17], "UPDATE customer SET c_balance = ?, c_data = ? WHERE c_w_id = ? AND d_id = ? AND c_id = ?", 90) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][18], "UPDATE customer SET c_balance = ? WHERE c_w_id = ? AND d_id = ? AND c_id = ?", 78) ) goto sqlerr;
 #ifdef MYSQL_WRAPPER
-  sprintf(SQL, "INSERT INTO %s_history.history(h_c_d_id, h_c_w_id, h_c_id, d_id, h_w_id, h_date, h_amount, h_data) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", db_string);
+  sprintf(SQL, "INSERT INTO %s.history(h_c_d_id, h_c_w_id, h_c_id, d_id, h_w_id, h_date, h_amount, h_data) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", db_string);
   if( mysql_stmt_prepare(stmt[t_num][19], SQL, strlen(SQL)) ) goto sqlerr;
 #else
   if( mysql_stmt_prepare(stmt[t_num][19], "INSERT INTO history(h_c_d_id, h_c_w_id, h_c_id, d_id, h_w_id, h_date, h_amount, h_data) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", 120) ) goto sqlerr;
@@ -873,7 +869,7 @@ int thread_main (thread_arg* arg)
   //DISTINCT col must be ordered by mysqld
   if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20) ORDER BY ol_i_id", 130) ) goto sqlerr;
   //Change database.
-  sprintf(SQL, "SELECT count(*) FROM %s_stock.stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", db_string);
+  sprintf(SQL, "SELECT count(*) FROM %s.stock WHERE s_w_id = ? AND s_i_id = ? AND s_quantity < ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][34], SQL, strlen(SQL)) ) goto sqlerr;
 #else
   if( mysql_stmt_prepare(stmt[t_num][33], "SELECT DISTINCT ol_i_id FROM order_line WHERE ol_w_id = ? AND d_id = ? AND ol_o_id < ? AND ol_o_id >= (? - 20)", 113) ) goto sqlerr;

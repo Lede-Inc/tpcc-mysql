@@ -41,7 +41,7 @@ long            max_ware;
 int             i;
 int             option_debug = 0;	/* 1 if generating debug output    */
 int             is_local = 1;           /* "1" mean local */
-int             XA = 1;		/* 1 mean XA transaction */
+int             XA = 0;		/* 1 mean XA transaction */
 
 #define DB_STRING_MAX 51
 
@@ -271,7 +271,7 @@ main(argc, argv)
 			       //"INSERT INTO warehouse values(?,?,?,?,?,?,?,?,?)",
 			       //47) ) goto Error_SqlCall_close;
 #ifdef MYSQL_WRAPPER
-    sprintf(SQL, "INSERT INTO %s_stock.stock(s_i_id,s_w_id,s_quantity,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10,s_ytd,s_order_cnt,s_remote_cnt,s_data) values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
+    sprintf(SQL, "INSERT INTO %s.stock(s_i_id,s_w_id,s_quantity,s_dist_01,s_dist_02,s_dist_03,s_dist_04,s_dist_05,s_dist_06,s_dist_07,s_dist_08,s_dist_09,s_dist_10,s_ytd,s_order_cnt,s_remote_cnt,s_data) values(?,?,?,?,?,?,?,?,?,?,?,?,?,0,0,0,?)", db_string);
     if( mysql_stmt_prepare(stmt[2], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
 #else
     if( mysql_stmt_prepare(stmt[2],
@@ -287,7 +287,7 @@ main(argc, argv)
 			       //"INSERT INTO customer values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, 10.0, 1, 0,?)",
 			       //76) ) goto Error_SqlCall_close;
 #ifdef MYSQL_WRAPPER
-    sprintf(SQL, "INSERT INTO %s_history.history(h_c_id,h_c_d_id,h_c_w_id,d_id,h_w_id,h_date,h_amount,h_data) values(?,?,?,?,?,?,?,?)", db_string);
+    sprintf(SQL, "INSERT INTO %s.history(h_c_id,h_c_d_id,h_c_w_id,d_id,h_w_id,h_date,h_amount,h_data) values(?,?,?,?,?,?,?,?)", db_string);
     if( mysql_stmt_prepare(stmt[5], SQL, strlen(SQL)) ) goto Error_SqlCall_close;
 #else
 	if( mysql_stmt_prepare(stmt[5],
