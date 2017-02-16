@@ -46,11 +46,46 @@ int             XA_arg = 0;		/* 1 mean XA transaction */
 
 #define DB_STRING_MAX 51
 
+int transaction_flag = 0;
+
+#ifdef AUTOCOMMIT
 #define RESET_TRANS_STATE(mysql) \
 do {\
 mysql_autocommit(mysql,1); \
 mysql_autocommit(mysql,0); \
 }while(0)
+
+#define START_TRANS() ((void) 0)
+#define AFTER_TRANS() ((void) 0)
+
+#else
+
+//disalbe mysql_autocommit
+#define mysql_autocommit(mysql, type) do { int _autocommit = (type); if (_autocommit == 1) { if (transaction_flag) {mysql_query(mysql, "ROLLBACK"); transaction_flag = 0;} } else { if(transaction_flag == 0) {mysql_query(mysql, "START TRANSACTION"); transaction_flag = 1;} } } while(0)
+
+#define RESET_TRANS_STATE(mysql) \
+do {\
+if(transaction_flag == 1) {\
+	mysql_query(mysql,"START TRANSACTION"); \
+	if(XA==0) {\
+		mysql_trans_no_xa(mysql);\
+	}\
+}\
+}while(0)
+
+#define START_TRANS(mysql) \
+do {\
+if (transaction_flag != 1) {\
+mysql_query(mysql, "START TRANSACTION");\
+if (XA == 0) {\
+	mysql_trans_no_xa(mysql);\
+}\
+transaction_flag = 1;\
+} } while(0)
+
+#define AFTER_TRANS(mysql) do { if ( transaction_flag == 1) { mysql_query(mysql, "START TRANSACTION"); if (XA ==0) {mysql_trans_no_xa(mysql);}} } while(0)
+
+#endif
 
 #include "parse_port.h"
 
@@ -61,6 +96,7 @@ try_stmt_execute(MYSQL_STMT *mysql_stmt)
     if (ret) {
         printf("\n%d, %s, %s\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql) );
         mysql_rollback(mysql);
+	AFTER_TRANS(mysql);
 #ifdef MYSQL_WRAPPER
 		if (XA == 0) {
 			if (mysql_trans_no_xa(mysql)) {
@@ -193,7 +229,8 @@ main(argc, argv)
 	    printf("  [part(1-4)]: %d\n", part_no);
 	    printf("     [MIN WH]: %d\n", min_ware);
 	    printf("     [MAX WH]: %d\n", max_ware);
-            if (part_no == 1 || part_no == 4) {
+            //if (part_no == 1 || part_no == 4) {
+            if (part_no == 1) {
                 if (XA == 0) {
                     printf("Part %d need XA, force XA...", part_no);
                     XA = 1;
@@ -1131,8 +1168,8 @@ Orders(d_id, w_id)
 
 	/* EXEC SQL WHENEVER SQLERROR GOTO sqlerr; */
 
-	printf("Loading Orders for D=%ld, W= %ld, Force XA \n", d_id, w_id);
-        XA = 1;
+	printf("Loading Orders for D=%ld, W= %ld, Set XA to %d\n", d_id, w_id, XA_arg);
+        XA = XA_arg;
 	o_d_id = d_id;
 	o_w_id = w_id;
 retry:
@@ -1359,6 +1396,7 @@ Error(mysql_stmt)
 
     /*EXEC SQL ROLLBACK WORK;*/
     mysql_rollback(mysql);
+    AFTER_TRANS(mysql);
 
     /*EXEC SQL DISCONNECT;*/
     mysql_close(mysql);
