@@ -45,9 +45,11 @@ int delivery( int t_num,
 
 	/* For each district in warehouse */
 	/* printf("W: %d\n", w_id); */
+	int deal_flag = 0;
 
 	for (d_id = 1; d_id <= DIST_PER_WARE; d_id++) {
 		START_TRANS(t_num, "warehouse", w_id);
+		deal_flag = 0;
 	        proceed = 1;
 		/*EXEC_SQL SELECT COALESCE(MIN(no_o_id),0) INTO :no_o_id
 		                FROM new_orders
@@ -80,6 +82,7 @@ int delivery( int t_num,
 
 
 		if(no_o_id == 0) continue;
+		deal_flag = 1;
 		proceed = 2;
 		/*EXEC_SQL DELETE FROM new_orders WHERE no_o_id = :no_o_id AND no_d_id = :d_id
 		  AND no_w_id = :w_id;*/
@@ -229,6 +232,10 @@ int delivery( int t_num,
 
 	}
 	/*EXEC_SQL COMMIT WORK;*/
+	if (deal_flag == 0) {
+		if( mysql_commit(ctx[t_num]) ) goto sqlerr;
+		AFTER_TRANS(t_num);
+	}
 	return (1);
 
 sqlerr:
