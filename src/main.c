@@ -85,11 +85,11 @@ double cur_max_rt[5];
 
 double prev_total_rt[5];
 
-#define RTIME_NEWORD   5
-#define RTIME_PAYMENT  5
-#define RTIME_ORDSTAT  5
-#define RTIME_DELIVERY 80
-#define RTIME_SLEV     20
+#define RTIME_NEWORD   50
+#define RTIME_PAYMENT  50
+#define RTIME_ORDSTAT  50
+#define RTIME_DELIVERY 800
+#define RTIME_SLEV     200
 
 int rt_limit[5] = {
  RTIME_NEWORD,
