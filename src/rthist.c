@@ -33,7 +33,7 @@ void hist_inc( int transaction, double rtclk )
   int i;
 
   i = ( rtclk * (double)REC_PER_SEC );
-  if(i >= (MAXREC * REC_PER_SEC)){
+  if(i >= (MAXREC * REC_PER_SEC) || i < 0){
     i = (MAXREC * REC_PER_SEC) - 1;
   }
   if (rtclk > cur_max_rt[transaction]) cur_max_rt[transaction] = rtclk;
