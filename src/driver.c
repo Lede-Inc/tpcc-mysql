@@ -72,7 +72,7 @@ if (XA_RATE[n] == 0) { \
 extern long clk_tck;
 extern sb_percentile_t local_percentile;
 
-#define MAX_RETRY 2000
+#define MAX_RETRY 2
 
 int driver (int t_num)
 {
