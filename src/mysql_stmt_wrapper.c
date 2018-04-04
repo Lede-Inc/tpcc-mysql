@@ -192,10 +192,13 @@ int _my_mysql_stmt_store_result(MYSQL_STMT * stmt) {
 	}
 };
 
-int _mysql_trans_no_xa(MYSQL * mysql) {
+int _mysql_trans_no_xa(MYSQL * mysql, const char * table, int key) {
 	int ret = 1;
 	MYSQL_RES * res;
-	ret = mysql_query(mysql, "SELECT /*# transaction=SINGLE_NODE*/ 1");
+	char SQL[1024] = "";
+	sprintf(SQL, "SELECT /*# transaction=SINGLE_NODE table=%s key=%d */ 1", table, key);
+	
+	ret = mysql_query(mysql, SQL);
 	if (ret == 0) { 
 		res = mysql_store_result(mysql);
 	}

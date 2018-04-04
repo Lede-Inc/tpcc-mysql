@@ -11,6 +11,7 @@
 
 #include "spt_proc.h"
 #include "tpc.h"
+#include "xa_macro.h"
 
 extern MYSQL **ctx;
 extern MYSQL_STMT ***stmt;
@@ -54,6 +55,8 @@ int ordstat( int t_num,
 
 	/*EXEC SQL WHENEVER NOT FOUND GOTO sqlerr;*/
 	/*EXEC SQL WHENEVER SQLERROR GOTO sqlerr;*/
+
+	START_TRANS(t_num, "warehouse", w_id);
 
 	if (byname) {
 		strcpy(c_last, c_last_arg);
@@ -321,6 +324,7 @@ done:
 	/*EXEC_SQL CLOSE c_items;*/
         /*EXEC_SQL COMMIT WORK;*/
 	if( mysql_commit(ctx[t_num]) ) goto sqlerr;
+AFTER_TRANS(t_num);
 
 	return (1);
 
@@ -329,7 +333,7 @@ sqlerr:
 	error(ctx[t_num],mysql_stmt);
         /*EXEC SQL WHENEVER SQLERROR GOTO sqlerrerr;*/
 	/*EXEC_SQL ROLLBACK WORK;*/
-	mysql_rollback(ctx[t_num]);
+	mysql_rollback(ctx[t_num]);AFTER_TRANS(t_num);
 sqlerrerr:
 	return (0);
 }

@@ -20,6 +20,9 @@
 #include "sequence.h"
 #include "rthist.h"
 #include "sb_percentile.h"
+#include "xa_macro.h"
+
+int * transaction_flag;
 
 /* Global SQL Variables */
 MYSQL **ctx;
@@ -488,6 +491,7 @@ int main( int argc, char *argv[] )
   for ( i=0; i < num_conn; i++) {
     XA_FLAG[i] = 1;
   }
+  transaction_flag = calloc(sizeof(int), num_conn);
 #endif
   for( i=0; i < num_conn; i++ ){
       stmt[i] = malloc( sizeof(MYSQL_STMT *) * 40 );
@@ -806,7 +810,7 @@ int thread_main (thread_arg* arg)
   }
 
   if(resp) {
-    mysql_autocommit(ctx[t_num], 0);
+    //mysql_autocommit(ctx[t_num], 0);
   } else {
     mysql_close(ctx[t_num]);
     goto sqlerr;
@@ -826,13 +830,14 @@ int thread_main (thread_arg* arg)
   if( mysql_stmt_prepare(stmt[t_num][2], "UPDATE district SET d_next_o_id = ? + 1 WHERE d_id = ? AND d_w_id = ?", 69) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][3], "INSERT INTO orders (o_id, d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local) VALUES(?, ?, ?, ?, ?, ?, ?)", 111) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][4], "INSERT INTO new_orders (no_o_id, d_id, no_w_id) VALUES (?,?,?)", 65) ) goto sqlerr;
-  if( mysql_stmt_prepare(stmt[t_num][5], "SELECT i_price, i_name, i_data FROM item WHERE i_id = ?", 55) ) goto sqlerr;
 #ifdef MYSQL_WRAPPER
+  if( mysql_stmt_prepare(stmt[t_num][5], "SELECT /*# table=warehouse key=? */ i_price, i_name, i_data FROM item WHERE i_id = ?", 84) ) goto sqlerr;
   sprintf(SQL, "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM %s.stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", db_string);
   if( mysql_stmt_prepare(stmt[t_num][6], SQL, strlen(SQL)) ) goto sqlerr;
   sprintf(SQL, "UPDATE %s.stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", db_string);
   if( mysql_stmt_prepare(stmt[t_num][7], SQL, strlen(SQL)) ) goto sqlerr;
 #else
+  if( mysql_stmt_prepare(stmt[t_num][5], "SELECT i_price, i_name, i_data FROM item WHERE i_id = ?", 55) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][6], "SELECT s_quantity, s_data, s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05, s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10 FROM stock WHERE s_i_id = ? AND s_w_id = ? FOR UPDATE", 189) ) goto sqlerr;
   if( mysql_stmt_prepare(stmt[t_num][7], "UPDATE stock SET s_quantity = ? WHERE s_i_id = ? AND s_w_id = ?", 63) ) goto sqlerr;
 #endif
@@ -881,6 +886,7 @@ int thread_main (thread_arg* arg)
 
   /* EXEC SQL COMMIT WORK; */
   if( mysql_commit(ctx[t_num]) ) goto sqlerr;
+AFTER_TRANS(t_num);
 
   for(i=0;i<40;i++){
       mysql_stmt_free_result(stmt[t_num][i]);

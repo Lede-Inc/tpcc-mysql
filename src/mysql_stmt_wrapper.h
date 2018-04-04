@@ -21,6 +21,7 @@
 #define mysql_stmt_sqlstate(...) _my_mysql_stmt_sqlstate(__VA_ARGS__)
 #define mysql_stmt_store_result(...) _my_mysql_stmt_store_result(__VA_ARGS__)
 #define mysql_trans_no_xa(...) _mysql_trans_no_xa(__VA_ARGS__)
+
 #else
 #define mysql_trans_no_xa(...)  ((int)0)
 #endif
@@ -42,7 +43,7 @@ int _my_mysql_stmt_prepare(MYSQL_STMT * stmt, const char * stmt_str, unsigned lo
 const char * _my_mysql_stmt_sqlstate(MYSQL_STMT * stmt);
 int _my_mysql_stmt_store_result(MYSQL_STMT * stmt);
 
-int _mysql_trans_no_xa(MYSQL * mysql);
+int _mysql_trans_no_xa(MYSQL * mysql, const char * table, int key);
 
 #ifdef __cplusplus
 }

@@ -12,6 +12,7 @@
 
 #include "spt_proc.h"
 #include "tpc.h"
+#include "xa_macro.h"
 
 #define pick_dist_info(ol_dist_info,ol_supply_w_id) \
 switch(ol_supply_w_id) { \
@@ -111,6 +112,12 @@ int neword( int t_num,
 
         gettimestamp(datetime, STRFTIME_FORMAT, TIMESTAMP_LEN);
 	clk_start = clock_gettime(CLOCK_REALTIME, &tbuf_start );
+
+if (o_all_local) {
+	START_TRANS(t_num, "warehouse", w_id);
+} else {
+	START_TRANS(t_num, "", w_id);
+}
 
 	proceed = 1;
 	/*EXEC_SQL SELECT c_discount, c_last, c_credit, w_tax
@@ -301,9 +308,17 @@ int neword( int t_num,
 		        WHERE i_id = :ol_i_id;*/
 		mysql_stmt = stmt[t_num][5];
 
+#ifndef MYSQL_WRAPPER
 		memset(param, 0, sizeof(MYSQL_BIND) * 1); /* initialize */
 		param[0].buffer_type = MYSQL_TYPE_LONG;
 		param[0].buffer = &ol_i_id;
+#else
+		memset(param, 0, sizeof(MYSQL_BIND) * 2); /* initialize */
+		param[0].buffer_type = MYSQL_TYPE_LONG;
+		param[0].buffer = &w_id;
+		param[1].buffer_type = MYSQL_TYPE_LONG;
+		param[1].buffer = &ol_i_id;
+#endif
 		if( mysql_stmt_bind_param(mysql_stmt, param) ) goto sqlerr;
 		if( mysql_stmt_execute(mysql_stmt) ) goto sqlerr;
 
@@ -503,6 +518,7 @@ int neword( int t_num,
 
 	/*EXEC_SQL COMMIT WORK;*/
 	if( mysql_commit(ctx[t_num]) ) goto sqlerr;
+AFTER_TRANS(t_num);
 	clk1 = clock_gettime(CLOCK_REALTIME, &tbuf1 );
 	if (ftrx_file) {
 		fprintf(ftrx_file,"t_num: %d finish: %lu %lu start: %lu %lu\n",t_num, tbuf1.tv_sec, tbuf1.tv_nsec,
@@ -513,7 +529,7 @@ int neword( int t_num,
 
 invaliditem:
 	/*EXEC_SQL ROLLBACK WORK;*/
-	mysql_rollback(ctx[t_num]);
+	mysql_rollback(ctx[t_num]);AFTER_TRANS(t_num);
 
 	/* printf("Item number is not valid\n"); */
 	return (1); /* OK? */
@@ -523,7 +539,7 @@ sqlerr:
       	error(ctx[t_num],mysql_stmt);
 	/*EXEC SQL WHENEVER SQLERROR GOTO sqlerrerr;*/
 	/*EXEC_SQL ROLLBACK WORK;*/
-	mysql_rollback(ctx[t_num]);
+	mysql_rollback(ctx[t_num]);AFTER_TRANS(t_num);
 sqlerrerr:
 	return (0);
 }

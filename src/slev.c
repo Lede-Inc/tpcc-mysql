@@ -11,6 +11,7 @@
 
 #include "spt_proc.h"
 #include "tpc.h"
+#include "xa_macro.h"
 
 extern MYSQL **ctx;
 extern MYSQL_STMT ***stmt;
@@ -45,6 +46,7 @@ int slev( int t_num,
 #ifdef DEBUG
 	printf("select 1\n");
 #endif
+	START_TRANS(t_num, "warehouse", w_id);
 	/*EXEC_SQL SELECT d_next_o_id
 	                INTO :d_next_o_id
 	                FROM district
@@ -168,6 +170,7 @@ done:
 	/*EXEC_SQL CLOSE ord_line;*/
 	/*EXEC_SQL COMMIT WORK;*/
 	if( mysql_commit(ctx[t_num]) ) goto sqlerr;
+AFTER_TRANS(t_num);
 
 	return (1);
 
@@ -176,7 +179,7 @@ sqlerr:
 	error(ctx[t_num],mysql_stmt);
         /*EXEC SQL WHENEVER SQLERROR GOTO sqlerrerr;*/
 	/*EXEC_SQL ROLLBACK WORK;*/
-	mysql_rollback(ctx[t_num]);
+	mysql_rollback(ctx[t_num]);AFTER_TRANS(t_num);
 sqlerrerr:
 	return (0);
 
@@ -186,6 +189,6 @@ sqlerr2:
         /*EXEC SQL WHENEVER SQLERROR GOTO sqlerrerr;*/
 	/*EXEC_SQL ROLLBACK WORK;*/
 	mysql_stmt_free_result(mysql_stmt);
-	mysql_rollback(ctx[t_num]);
+	mysql_rollback(ctx[t_num]);AFTER_TRANS(t_num);
 	return (0);
 }

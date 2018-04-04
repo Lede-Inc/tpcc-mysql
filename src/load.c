@@ -55,35 +55,41 @@ mysql_autocommit(mysql,1); \
 mysql_autocommit(mysql,0); \
 }while(0)
 
-#define START_TRANS() ((void) 0)
-#define AFTER_TRANS() ((void) 0)
+#define START_TRANS(...) ((void) 0)
+#define AFTER_TRANS(...) ((void) 0)
 
 #else
 
 //disalbe mysql_autocommit
-#define mysql_autocommit(mysql, type) do { int _autocommit = (type); if (_autocommit == 1) { if (transaction_flag) {mysql_query(mysql, "ROLLBACK"); transaction_flag = 0;} } else { if(transaction_flag == 0) {mysql_query(mysql, "START TRANSACTION"); transaction_flag = 1;} } } while(0)
+//#define mysql_autocommit(mysql, type) do { int _autocommit = (type); if (_autocommit == 1) { if (transaction_flag) {mysql_query(mysql, "ROLLBACK"); transaction_flag = 0;} } else { if(transaction_flag == 0) {mysql_query(mysql, "START TRANSACTION"); transaction_flag = 1;} } } while(0)
+#define mysql_autocommit(mysql, type) ((void) 0)
 
-#define RESET_TRANS_STATE(mysql) \
+#define RESET_TRANS_STATE(mysql, table, key) \
 do {\
 if(transaction_flag == 1) {\
-	mysql_query(mysql,"START TRANSACTION"); \
 	if(XA==0) {\
-		mysql_trans_no_xa(mysql);\
+		char SQL[256];\
+		sprintf(SQL, "START /*# transaction=SINGLE_NODE table=%s key=%d */ TRANSACTION", table, key);\
+		mysql_query(mysql,SQL); \
+	} else {\
+		mysql_query(mysql,"START TRANSACTION"); \
 	}\
 }\
 }while(0)
 
-#define START_TRANS(mysql) \
+#define START_TRANS(mysql, table, key) \
 do {\
 if (transaction_flag != 1) {\
-mysql_query(mysql, "START TRANSACTION");\
-if (XA == 0) {\
-	mysql_trans_no_xa(mysql);\
-}\
-transaction_flag = 1;\
+	if(XA==0) {\
+		mysql_query(mysql,"START TRANSACTION"); \
+		mysql_trans_no_xa(mysql, table, key);\
+	} else {\
+		mysql_query(mysql,"START TRANSACTION"); \
+	}\
+	transaction_flag = 1;\
 } } while(0)
 
-#define AFTER_TRANS(mysql) do { if ( transaction_flag == 1) { mysql_query(mysql, "START TRANSACTION"); if (XA ==0) {mysql_trans_no_xa(mysql);}} } while(0)
+#define AFTER_TRANS(mysql) do { transaction_flag = 0;} while(0)
 
 #endif
 
@@ -97,14 +103,6 @@ try_stmt_execute(MYSQL_STMT *mysql_stmt)
         printf("\n%d, %s, %s\n", mysql_errno(mysql), mysql_sqlstate(mysql), mysql_error(mysql) );
         mysql_rollback(mysql);
 	AFTER_TRANS(mysql);
-#ifdef MYSQL_WRAPPER
-		if (XA == 0) {
-			if (mysql_trans_no_xa(mysql)) {
-				return ret;
-			}
-		}
-#endif
-
     }
     return ret;
 }
@@ -273,15 +271,8 @@ main(argc, argv)
 
 	if(resp) {
 	    mysql_autocommit(mysql, 0);
-#ifdef MYSQL_WRAPPER
-		if (XA == 0) {
-			if (mysql_trans_no_xa(mysql)) {
-				goto Error_SqlCall_close;
-			}
-		}
-#endif
-	    mysql_query(mysql, "SET UNIQUE_CHECKS=0");
-	    mysql_query(mysql, "SET FOREIGN_KEY_CHECKS=0");
+	    //mysql_query(mysql, "SET UNIQUE_CHECKS=0");
+	    //mysql_query(mysql, "SET FOREIGN_KEY_CHECKS=0");
 	} else {
 	    goto Error_SqlCall_close;
 	}
@@ -453,6 +444,7 @@ retry:
     if (retried)
         printf("Retrying ...\n");
     retried = 1;
+	START_TRANS(mysql, "", 0);
 	for (i_id = 1; i_id <= MAXITEMS; i_id++) {
 
 		/* Generate Item Data */
@@ -521,7 +513,7 @@ retry:
 
 	/* EXEC SQL COMMIT WORK; */
 	if( mysql_commit(mysql) ) goto sqlerr;
-    RESET_TRANS_STATE(mysql);
+	AFTER_TRANS(mysql);
 
 	printf("Item Done. \n");
 	return;
@@ -569,6 +561,7 @@ retry:
         printf("Retrying ....\n");
     retried = 1;
 	for (; w_id <= max_ware; w_id++) {
+		START_TRANS(mysql, "warehouse", w_id);
 
 		/* Generate Warehouse Data */
 
@@ -623,7 +616,7 @@ retry:
 
 		/* EXEC SQL COMMIT WORK; */
 		if( mysql_commit(mysql) ) goto sqlerr;
-		RESET_TRANS_STATE(mysql);
+		AFTER_TRANS(mysql);
 
 	}
 
@@ -683,7 +676,7 @@ LoadOrd()
 
 	/* EXEC SQL COMMIT WORK; */	/* Just in case */
 	if( mysql_commit(mysql) ) goto sqlerr;
-	RESET_TRANS_STATE(mysql);
+	AFTER_TRANS(mysql);
 
 	return;
 sqlerr:
@@ -874,11 +867,6 @@ District(w_id)
 	d_ytd = 30000.0;
 	d_next_o_id = 3001L;
 retry:
-    if (XA == 0) {
-        //force warehouse and distinct use XA.
-        mysql_autocommit(mysql, 1);
-        mysql_autocommit(mysql, 0);
-    }
 	for (d_id = 1; d_id <= DIST_PER_WARE; d_id++) {
 
 		/* Generate District Data */
@@ -987,6 +975,7 @@ retry:
     if (retried)
         printf("Retrying ...\n");
     retried = 1;
+	START_TRANS(mysql, "warehouse", w_id);
 	for (c_id = 1; c_id <= CUST_PER_DIST; c_id++) {
 
 		/* Generate Customer Data */
@@ -1127,7 +1116,7 @@ retry:
 	}
 	/* EXEC SQL COMMIT WORK; */
 	if( mysql_commit(mysql) ) goto sqlerr;
-    RESET_TRANS_STATE(mysql);
+	AFTER_TRANS(mysql);
 	printf("Customer Done.\n");
 
 	return;
@@ -1177,6 +1166,7 @@ retry:
         printf("Retrying ...\n");
     retried = 1;
 	InitPermutation();	/* initialize permutation of customer numbers */
+	START_TRANS(mysql, "warehouse", w_id);
 	for (o_id = 1; o_id <= ORD_PER_DIST; o_id++) {
 
 		/* Generate Order Data */
@@ -1347,7 +1337,7 @@ retry:
 	}
 	/*EXEC SQL COMMIT WORK;*/
 	if( mysql_commit(mysql) ) goto sqlerr;
-    RESET_TRANS_STATE(mysql);
+	AFTER_TRANS(mysql);
 
 	printf("Orders Done.\n");
 	return;
